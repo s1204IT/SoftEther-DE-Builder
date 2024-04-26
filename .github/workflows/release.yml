@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+
+      - name: Get latest version name
+        uses: oprypin/find-latest-tag@v1.1.2
+        id: latest
+        with:
+          repository: SoftEtherVPN/SoftEtherVPN
+          releases-only: true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: SoftEtherVPN/SoftEtherVPN
+          ref: ${{ steps.latest.outputs.tag }}
+          submodules: true
+
+      - name: Check tag exists
+        uses: mukunku/tag-exists-action@v1.6.0
+        id: check-tag
+        with:
+          tag: "${{ steps.latest.outputs.tag }}"
+
+      - name: Check confliction
+        run: |
+          if [ "${{ steps.check-tag.outputs.exists }}" == "true" ]; then
+            echo "Release is exists!"
+            echo -e "https://github.com/$GITHUB_REPOSITORY/releases/tag/${{ steps.latest.outputs.tag }}"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install cmake gcc g++ ninja-build libncurses5-dev libreadline-dev libsodium-dev libssl-dev make zlib1g-dev liblz4-dev libnl-genl-3-dev
+
+      - name: Build
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Ninja" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+          cmake --build .
+          cpack -C Release -G DEB
+          sudo chown -R runner:runner .
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.latest.outputs.tag }}
+          draft: false
+          prerelease: false
+          files: build/_CPack_Packages/Linux/DEB/*.deb
+          body: https://github.com/SoftEtherVPN/SoftEtherVPN/releases/tag/${{ steps.latest.outputs.tag }}
