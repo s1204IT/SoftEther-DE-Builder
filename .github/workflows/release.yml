@@ -18,26 +18,27 @@ jobs:
           repository: SoftEtherVPN/SoftEtherVPN
           releases-only: true
 
-      - name: Checkout
+      - name: Get previous version name
+        uses: oprypin/find-latest-tag@v1.1.2
+        id: previous
+        with:
+          repository: ${{ github.repository }}
+          releases-only: true
+
+      - name: Check confliction
+        run: |
+          if [ "${{ steps.latest.outputs.tag }}" == "${{ steps.previous.outputs.tag }}" ]; then
+            echo "Release is exists!"
+            echo -e "https://github.com/$GITHUB_REPOSITORY/releases/tag/${{ steps.latest.outputs.tag }}"
+            exit 1
+          fi
+
+      - name: Checkout SoftEtherVPN
         uses: actions/checkout@v4
         with:
           repository: SoftEtherVPN/SoftEtherVPN
           ref: ${{ steps.latest.outputs.tag }}
           submodules: true
-
-      - name: Check tag exists
-        uses: mukunku/tag-exists-action@v1.6.0
-        id: check-tag
-        with:
-          tag: "${{ steps.latest.outputs.tag }}"
-
-      - name: Check confliction
-        run: |
-          if [ "${{ steps.check-tag.outputs.exists }}" == "true" ]; then
-            echo "Release is exists!"
-            echo -e "https://github.com/$GITHUB_REPOSITORY/releases/tag/${{ steps.latest.outputs.tag }}"
-            exit 1
-          fi
 
       - name: Install dependencies
         run: |
@@ -60,4 +61,7 @@ jobs:
           draft: false
           prerelease: false
           files: build/_CPack_Packages/Linux/DEB/*.deb
-          body: https://github.com/SoftEtherVPN/SoftEtherVPN/releases/tag/${{ steps.latest.outputs.tag }}
+          body: |
+            https://github.com/SoftEtherVPN/SoftEtherVPN/releases/tag/${{ steps.latest.outputs.tag }}
+
+            https://github.com/SoftEtherVPN/SoftEtherVPN/compare/${{ steps.previous.outputs.tag }}...${{ steps.latest.outputs.tag }}
