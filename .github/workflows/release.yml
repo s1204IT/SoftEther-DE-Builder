@@ -5,8 +5,12 @@ on:
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, self-hosted ]
     permissions:
       contents: write
     steps:
@@ -52,7 +56,6 @@ jobs:
           cmake -G "Ninja" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
           cmake --build .
           cpack -C Release -G DEB
-          sudo chown -R runner:runner .
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -60,8 +63,12 @@ jobs:
           tag_name: ${{ steps.latest.outputs.tag }}
           draft: false
           prerelease: false
-          files: build/_CPack_Packages/Linux/DEB/*.deb
+          make_latest: true
+          files: build/*.deb
           body: |
             https://github.com/SoftEtherVPN/SoftEtherVPN/releases/tag/${{ steps.latest.outputs.tag }}
 
             https://github.com/SoftEtherVPN/SoftEtherVPN/compare/${{ steps.previous.outputs.tag }}...${{ steps.latest.outputs.tag }}
+
+      - name: Remove files
+        run: rm -rf *

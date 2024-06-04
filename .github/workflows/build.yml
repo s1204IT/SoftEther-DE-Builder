@@ -5,8 +5,12 @@ on:
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, self-hosted ]
     steps:
 
       - name: Checkout
@@ -28,10 +32,17 @@ jobs:
           cmake -G "Ninja" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
           cmake --build .
           cpack -C Release -G DEB
-          sudo chown -R runner:runner .
+
+      - name: Set env
+        run: |
+          declare -A ARCH_MAP=([ubuntu-latest]="amd64" [self-hosted]="arm64")
+          echo "arch=${ARCH_MAP[${{ matrix.os }}]}" >> $GITHUB_ENV
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: SoftEtherVPN@${{ env.commit }}
-          path: build/_CPack_Packages/Linux/DEB/*.deb
+          name: SoftEtherVPN-${{ env.arch }}@${{ env.commit }}
+          path: build/*.deb
+
+      - name: Remove files
+        run: rm -rf *
