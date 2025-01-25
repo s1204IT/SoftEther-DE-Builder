@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, self-hosted ]
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
     permissions:
       contents: write
     steps:
@@ -69,6 +69,3 @@ jobs:
             https://github.com/SoftEtherVPN/SoftEtherVPN/releases/tag/${{ steps.latest.outputs.tag }}
 
             https://github.com/SoftEtherVPN/SoftEtherVPN/compare/${{ steps.previous.outputs.tag }}...${{ steps.latest.outputs.tag }}
-
-      - name: Remove files
-        run: rm -rf *
