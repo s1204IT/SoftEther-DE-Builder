@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, self-hosted ]
+        os: [ ubuntu-24.04, ubuntu-24.04-arm ]
     steps:
 
       - name: Checkout
@@ -43,6 +43,3 @@ jobs:
         with:
           name: SoftEtherVPN-${{ env.arch }}@${{ env.commit }}
           path: build/*.deb
-
-      - name: Remove files
-        run: rm -rf *
