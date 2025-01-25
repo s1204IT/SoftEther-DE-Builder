@@ -35,7 +35,7 @@ jobs:
 
       - name: Set env
         run: |
-          declare -A ARCH_MAP=([ubuntu-latest]="amd64" [self-hosted]="arm64")
+          declare -A ARCH_MAP=([ubuntu-24.04]="amd64" [ubuntu-24.04-arm]="arm64")
           echo "arch=${ARCH_MAP[${{ matrix.os }}]}" >> $GITHUB_ENV
 
       - name: Upload
